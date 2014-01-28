@@ -5,8 +5,6 @@ import struct
 import util
 import merkletree
 import halfnode
-from coinbasetx import CoinbaseTransactionPOW
-from coinbasetx import CoinbaseTransactionPOS
 from coinbasetx import CoinbaseTransaction
 import lib.logger
 log = lib.logger.get_logger('block_template')
