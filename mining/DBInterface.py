@@ -4,6 +4,7 @@ from datetime import datetime
 import Queue
 import signal
 import Cache
+import notify_email
 from sets import Set
 
 import lib.settings as settings
@@ -23,11 +24,15 @@ class DBInterface():
 
         self.cache = Cache.Cache()
 
+        self.email = notify_email.NOTIFY_EMAIL()
+
         self.nextStatsUpdate = 0
 
         self.scheduleImport()
         
         self.next_force_import_time = time.time() + settings.DB_LOADER_FORCE_TIME
+        self.next_force_notify_time = time.time() + settings.NOTIFY_DEADMINER_INTERVAL
+
     
         signal.signal(signal.SIGINT, self.signal_handler)
 
@@ -152,48 +157,132 @@ class DBInterface():
             log.error("Update Found Block Share Record Failed: %s", e.args[0])
 
     def check_password(self, username, password):
-        if username == "":
-            log.info("Rejected worker for blank username")
-            return False
-        allowed_chars = Set('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-.')
-        if Set(username).issubset(allowed_chars) != True:
-            log.info("Username contains bad arguments")
-            return False
-        if username.count('.') > 1:
-            log.info("Username contains multiple . ")
-            return False
-        
-        # Force username and password to be strings
         username = str(username)
         password = str(password)
-        if not settings.USERS_CHECK_PASSWORD and self.user_exists(username): 
-            return True
-        elif self.cache.get(username) == password:
-            return True
-        elif self.dbi.check_password(username, password):
-            self.cache.set(username, password)
-            return True
-        elif settings.USERS_AUTOADD == True:
-            if self.dbi.get_uid(username) != False:
-                uid = self.dbi.get_uid(username)
+        allowed_chars = Set('0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-.')
+        if username == "":
+            log.info("Username: %s is blank" % username)
+            return self.bad_login(username,uid)
+        if Set(username).issubset(allowed_chars) != True:
+            log.info("Username: %s contains bad arguments" % username)
+            uid = False
+	    return self.bad_login(username,uid)
+        if username.count('.') > 1:
+            if self.get_uid(username) != False:
+                uid = self.get_uid(username)
+                log.info("Username: %s contains multiple . " % username)
+                return self.bad_login(username,uid)
+            return self.bad_login(username,uid=False)
+        if not settings.USERS_CHECK_PASSWORD and self.user_exists(username):
+            return self.success_login(username)
+        if self.dbi.check_password(username, password):
+            return self.success_login(username)
+        if settings.USERS_AUTOADD == True:
+            uid = self.get_uid(username)
+            if uid is not False:
                 self.dbi.insert_worker(uid, username, password)
-                self.cache.set(username, password)
-                return True
-        
-        log.info("Authentication for %s failed" % username)
+                log.info("Created new worker for %s" % username)
+                return self.success_login(username,password,uid)
+        else:        
+            return self.bad_login(username,uid)
+
+    def success_login(self,username, password=None, uid=None, ip=None, lastseen=None, bad_logins=None, email=None, ban_state=None):
+        cuser = self.cache.get(username)
+        cemail = self.cache.get(username+'_email')
+        cuid = self.cache.get(username+'_uid')
+        cpass = self.cache.get(username+'_password')
+        cbadlogins = self.cache.get(username+'_bad_logins')
+        cban = self.cache.get(username+'_ban_state')
+        cip = self.cache.get(username+'_ip')
+        clast = self.cache.get(username+'_lastseen')
+        #log.debug("Authenticated Successful: %s" % username)
+        #log.debug("Cached Username: %s" % cuser)
+        #log.debug("Cached Email: %s" % cemail)
+        #log.debug("Cached UID: %s" % cuid)
+        #log.debug("Cached Password: %s" % cpass)
+        #log.debug("Cached Bad Logins: %s" % cbadlogins)
+        #log.debug("Cached Ban State: %s" % cban)
+        #log.debug("Cached IP: %s" % cip)
+        #log.debug("Cached Last Seen: %s" % clast)
+        self.cache.set(username,username)
+        self.cache.set(username+'_email',username)
+        self.cache.set(username+'_uid',uid)
+        self.cache.set(username+'_password',password)
+        self.cache.set(username+'_bad_logins',0)
+        self.cache.set(username+'_ban_state',ban_state)
+        self.cache.set(username+'_ip',ip)
+        self.cache.set(username+'_lastseen',lastseen)
+        return True
+
+    def bad_login(self, username, uid=None):
+        log.debug("Authentication Failed: %s" % username)
+        self.cache.set(username,username)
+        self.cache.set(username+'_uid',uid)
+        if self.cache.get(username+'_bad_logins') is None:
+            self.cache.set(username+'_bad_logins',0)
+
+        cuser = self.cache.get(username)
+        cuid = self.cache.get(username+'_uid')
+        cemail = self.cache.get(username+'_email')
+        cuid = self.cache.get(username+'_uid')
+        cpass = self.cache.get(username+'_password')
+        cban = self.cache.get(username+'_ban_state')
+        cip = self.cache.get(username+'_ip')
+        clast = self.cache.get(username+'_lastseen')
+        cbadlogins = self.cache.get(username+'_bad_logins')
+
+	#log.debug("Username: %s" % username)
+        #log.debug("UID: %s" % uid)
+	#log.debug("Cached Username: %s" % cuser)
+        #log.debug("Cached Email: %s" % cemail)
+        #log.debug("Cached UID: %s" % cuid)
+        #log.debug("Cached Password: %s" % cpass)
+        #log.debug("Cached Bad Logins: %s" % cbadlogins)
+        #log.debug("Cached Ban State: %s" % cban)
+        #log.debug("Cached IP: %s" % cip)
+        #log.debug("Cached Last Seen: %s" % clast)
+
+        if uid != False:
+            #log.debug("Valid User ID - notifying...")
+            if time.time() >= self.next_force_notify_time or self.cache.get(username+'_bad_logins') == 0:
+                #log.debug("Interval passed - notifying...")
+                if self.cache.get(username+'_bad_logins') < settings.NOTIFY_MAX_EMAILS:
+                    #log.debug("Below max notification threshold: %s < %s" % (self.cache.get(username+'_bad_logins'),settings.NOTIFY_MAX_EMAILS))
+                    #log.debug("Fetching email address for: %s" % username)
+                    email = self.get_email(username,uid)
+                    #log.debug("Found: %s" % email)
+                    badcount = self.cache.get(username+'_bad_logins') + 1
+		    self.cache.set(username+'_bad_logins',badcount)
+                    log.info("%s Notification Emails Sent" % badcount)
+                    return self.email.notify_dead_miner(username,email)
+
+    def get_uid(self,username):
+        if self.cache.get(username+'_userid') != None:
+            return self.cache.get(username+'_userid')
+        elif self.dbi.get_uid(username) != False:
+            uid = self.dbi.get_uid(username)
+            self.cache.set(username+'_userid',uid)
+            return uid
+        else:
+            return False
+
+    def get_email(self, username, uid):
+        if self.cache.get(username+'_email') != None:
+            return self.cache.get(username+'_email')        
+        elif self.dbi.get_email(uid) != False:
+            email = self.dbi.get_email(uid)
+            self.cache.set(username+'_email',email)
+            return email
         return False
-    
-    def list_users(self):
-        return self.dbi.list_users()
-    
-    def get_user(self, id):
-        return self.dbi.get_user(id)
 
     def user_exists(self, username):
-        if self.cache.get(username) is not None:
+        if self.cache.get(username) != False or self.cache.get(username) != None and self.cache.get(username+'bad_logins') == 0:
             return True
-        user = self.dbi.get_user(username)
-        return user is not None 
+        elif self.dbi.get_user(username) != False:
+            self.cache.set(username,username)
+            return True
+	else:
+            return False
 
     def insert_user(self, username, password):        
         return self.dbi.insert_user(username, password)
