@@ -80,8 +80,9 @@ class ShareManagerInterface(object):
         dbi.queue_share([worker_name, block_header, block_hash, difficulty, timestamp, is_valid, ip, self.block_height, self.prev_hash,
                 invalid_reason, share_diff ])
  
-    def on_submit_block(self, is_accepted, worker_name, block_header, block_hash, timestamp, ip, share_diff):
+    def on_submit_block(self, (is_accepted, valid_hash), worker_name, block_header, block_hash, timestamp, ip, share_diff):
         log.debug("is_accpted %s", str(is_accepted))
+        log.debug("valid_hash %s", str(valid_hash))
         log.info("Block %s %s" % (block_hash, 'ACCEPTED' if is_accepted else 'REJECTED'))
         dbi.found_block([worker_name, block_header, block_hash, -1, timestamp, is_accepted, ip, self.block_height, self.prev_hash, share_diff ])
         
