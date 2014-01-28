@@ -173,10 +173,10 @@ class BitcoinRPC(object):
                 if "height" in result:
                     blockheight = result['height']
                 else:
-                    defer.returnValue(True)
+                    defer.returnValue((True, valid_hash))
             else:
                 log.info("Cannot find block for %s" % hash_hex)
-                defer.returnValue(False)
+                defer.returnValue((False, hash_hex))
 
         except Exception as e:
             try:
@@ -188,14 +188,14 @@ class BitcoinRPC(object):
                     if "height" in result:
                         blockheight = result['height']
                     else:
-                        defer.returnValue(True)
+                        defer.returnValue((True, valid_hash))
                 else:
                     log.info("Cannot find block for %s" % scrypt_hex)
-                    defer.returnValue(False)
+                    defer.returnValue((False, scrypt_hex))
 
             except Exception as e:
                 log.info("Cannot find block for hash_hex %s or scrypt_hex %s" % hash_hex, scrypt_hex)
-                defer.returnValue(False)
+                defer.returnValue((False, hash_hex))
 
         #after we've found the block, check the block with that height in the blockchain to see if hashes match
         try:
@@ -205,14 +205,14 @@ class BitcoinRPC(object):
             log.debug("hash of block of height %s: %s", blockheight, hash)
             if hash == valid_hash:
                 log.debug("Block confirmed: hash of block matches hash of blockheight")
-                defer.returnValue(True)
+                defer.returnValue((True, valid_hash))
             else:
                 log.debug("Block invisible: hash of block does not match hash of blockheight")
-                defer.returnValue(False)
+                defer.returnValue((False, valid_hash))
 
         except Exception as e:
             # cannot get blockhash from height; block was created, so return true
-            defer.returnValue(True)
+            defer.returnValue((True, valid_hash))
         else:
             log.info("Cannot find block for %s" % hash_hex)
-            defer.returnValue(False)
+            defer.returnValue((False, valid_hash))
