@@ -187,8 +187,6 @@ class DB_Mysql():
                 
                 
     def get_user(self, id_or_username):
-        log.debug("Finding user with id or username of %s", id_or_username)
-        
         self.execute(
             """
             SELECT *
@@ -206,7 +204,6 @@ class DB_Mysql():
         return user
 
     def get_uid(self, id_or_username):
-        log.debug("Finding user id of %s", id_or_username)
         uname = id_or_username.split(".", 1)[0]
         self.execute("SELECT `id` FROM `accounts` where username = %s", (uname))
         row = self.dbc.fetchone()
@@ -215,7 +212,19 @@ class DB_Mysql():
             return False
         else:
             uid = row[0]
-            return uid
+            return str(uid)
+
+    def get_email(self, uid):
+        log.debug("Finding email address for %s", uid)
+        self.execute("SELECT `email` FROM `accounts` where id = %s", (uid))
+        row = self.dbc.fetchone()
+
+        if row is None:
+            return False
+        else:
+            email = row[0]
+            return str(email)
+
 
     def insert_worker(self, account_id, username, password):
         log.debug("Adding new worker %s", username)
@@ -342,19 +351,18 @@ class DB_Mysql():
             }
             
         return ret
+
     def get_uid(self, id_or_username):
         log.debug("Finding user id of %s", id_or_username)
         uname = id_or_username.split(".", 1)[0]
         self.execute("SELECT `id` FROM `accounts` where username = %s", (uname))
         row = self.dbc.fetchone()
-        
        
         if row is None:
             return False
         else:
             uid = row[0]
             return uid
-    
     
     def insert_worker(self, account_id, username, password):
         log.debug("Adding new worker %s", username)
