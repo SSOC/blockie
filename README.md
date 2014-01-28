@@ -1,7 +1,7 @@
 #Description
-Stratum-mining is a pooled mining protocol. It is a replacement for *getwork* based pooling servers by allowing clients to generate work. The stratum protocol is described [here](http://mining.bitcoin.cz/stratum-mining) in full detail.
+Blockie is a stratum based mining protocol. It is a replacement for *getwork* based pooling servers by allowing clients to generate work. The stratum protocol is described [here](http://mining.bitcoin.cz/stratum-mining) in full detail.
 
-This is a implementation of stratum-mining for various cryptocurrency coins. It is compatible with *MPOS* as it complies with the standards of *pushpool*. The end goal is to build on these standards to come up with a more stable solution.
+This is a implementation of the stratum services various cryptocurrency coins. It is compatible with *MPOS*. The end goal is to build on these standards to come up with a more efficient, optimized and stable solution.
 
 The goal is to make a reliable stratum mining server for various cryptocurrency coins. Over time we will develop this to be more feature rich and very stable. If you would like to see a feature please file a feature request. 
 
@@ -9,14 +9,14 @@ The goal is to make a reliable stratum mining server for various cryptocurrency 
 
 #Features
 
-* Stratum Mining Pool 
-* Solved Block Confirmation
+* Stratum Mining Protocol
+* Block Confirmation
 * Job Based Vardiff support
-* Solution Block Hash Support
-* *NEW* SHA256 and Scrypt Algo Support 
+* Solution via SHA256/Scrypt
+* SHA256 and Scrypt Algo Support 
 * Log Rotation
 * Initial low difficulty share confirmation
-* Multiple *coind* wallets
+* Growing cryptocurrency support
 * On the fly addition of new *coind* wallets
 * MySQL/PostGres/SQLite database support
 * Adjustable database commit parameters
@@ -28,7 +28,6 @@ The goal is to make a reliable stratum mining server for various cryptocurrency 
 Not required, please contribute back by helping with coding or tracking issues.
 
 #Installation
-
 The installation of this *stratum-mining* can be found in the Repo Wiki. 
 
 #Contact
@@ -45,5 +44,3 @@ Please issue all issues via github.
 * @TheSeven
 * @Ahmed_Bodi
 * @Obigal
-
-
