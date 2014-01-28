@@ -28,9 +28,15 @@ def setup(on_startup):
     from lib.template_registry import TemplateRegistry
     from lib.bitcoin_rpc_manager import BitcoinRPCManager
     from lib.block_template import BlockTemplate
-    from lib.coinbaser import SimpleCoinbaser
-    
+
     bitcoin_rpc = BitcoinRPCManager()
+    result = (yield bitcoin_rpc.getblocktemplate())
+    MY_VERSION = 000 + result['version']
+    MY_SUBVERSION = ".4"
+    log.debug("MY_VERSION %s" % MY_VERSION)
+
+    from lib.coinbaser import SimpleCoinbaser
+
     
     # Check litecoind
     #         Check we can connect (sleep)
