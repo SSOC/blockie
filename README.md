@@ -28,14 +28,13 @@ The goal is to make a reliable stratum mining server for various cryptocurrency 
 Not required, please contribute back by helping with coding or tracking issues.
 
 #Installation
-The installation of this *stratum-mining* can be found in the Repo Wiki. 
+Installation instructions for Blockie will be available in the future.
 
 #Contact
 We are available in the #SSOC on irc.freenode.net
-Please issue all issues via github.
+Please send all issues/bugs via the github issue tracking system.
 
 #Credits
-
 * @Slush0 - Original version by Slush0 (original stratum code)
 * @GeneralFault 
 * @WadeeWomersley
