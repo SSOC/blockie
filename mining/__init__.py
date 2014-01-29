@@ -31,9 +31,6 @@ def setup(on_startup):
 
     bitcoin_rpc = BitcoinRPCManager()
     result = (yield bitcoin_rpc.getblocktemplate())
-    MY_VERSION = 000 + result['version']
-    MY_SUBVERSION = ".4"
-    log.debug("MY_VERSION %s" % MY_VERSION)
 
     from lib.coinbaser import SimpleCoinbaser
 
@@ -67,6 +64,9 @@ def setup(on_startup):
             result = (yield bitcoin_rpc.getblocktemplate())
             if isinstance(result, dict):
                 # litecoind implements version 1 of getblocktemplate
+                settings.MY_VERSION = 000 + result['version']
+                settings.MY_SUBVERSION = ".4"
+                log.debug("MY_VERSION %s" % settings.MY_VERSION)
                 if result['version'] >= 1:
                     result = (yield bitcoin_rpc.getdifficulty())
                     if isinstance(result,dict):
