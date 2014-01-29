@@ -18,30 +18,8 @@ import settings
 
 import lib.logger
 log = lib.logger.get_logger('halfnode')
-log.debug("Got to Halfnode")
-
-if settings.COINDAEMON_ALGO == 'scrypt':
-    log.debug("########################################### Loading LTC Scrypt #########################################################")
-    import ltc_scrypt
-elif settings.COINDAEMON_ALGO == 'quark':
-    log.debug("########################################### Loading Quark Support #########################################################")
-    import quark_hash
-else: 
-    log.debug("########################################### Loading SHA256 Support ######################################################")
-
-#if settings.COINDAEMON_Reward == 'POS':
-#        log.debug("########################################### Loading POS Support #########################################################")
-#        pass
-#else:
-#        log.debug("########################################### Loading POW Support ######################################################")
-#        pass
-
-if settings.COINDAEMON_TX == 'yes':
-    log.debug("########################################### Loading SHA256 Transaction Message Support #########################################################")
-    pass
-else:
-    log.debug("########################################### NOT Loading SHA256 Transaction Message Support ######################################################")
-    pass
+import ltc_scrypt
+#import quark_hash
 
 class CAddress(object):
     def __init__(self):
@@ -88,7 +66,7 @@ class CInv(object):
 
 class CBlockLocator(object):
     def __init__(self):
-        self.nVersion = MY_VERSION
+        self.nVersion = settings.MY_VERSION
         self.vHave = []
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
@@ -152,18 +130,18 @@ class CTxOut(object):
 
 class CTransaction(object):
     def __init__(self):
-            self.nVersion = MY_VERSION
-            self.vin = []
-            self.vout = []
-            self.nLockTime = 0
-            self.sha256 = None
-            self.nTime = 0
-            self.vin = []
-            self.vout = []
-            self.nLockTime = 0
-            self.sha256 = None
-        if self.nVersion >= 2: 
-            self.strTxComment = ""
+        self.nVersion = settings.MY_VERSION
+        self.vin = []
+        self.vout = []
+        self.nLockTime = 0
+        self.sha256 = None
+        self.nTime = 0
+        self.vin = []
+        self.vout = []
+        self.nLockTime = 0
+        self.sha256 = None
+        #if self.nVersion >= 2: 
+         #   self.strTxComment = ""
 
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
@@ -173,8 +151,8 @@ class CTransaction(object):
         self.vout = deser_vector(f, CTxOut)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
         self.sha256 = None
-        if self.nVersion >= 2:
-            self.strTxComment = deser_string(f)
+        #if self.nVersion >= 2:
+         #   self.strTxComment = deser_string(f)
 
     def serialize(self):
         r = ""
@@ -184,15 +162,15 @@ class CTransaction(object):
         r += ser_vector(self.vin)
         r += ser_vector(self.vout)
         r += struct.pack("<I", self.nLockTime)
-        if self.nVersion >= 2:
-            r += ser_string(self.strTxComment)
+#        if self.nVersion >= 2:
+ #           r += ser_string(self.strTxComment)
         return r
- 
+
     def calc_sha256(self):
         if self.sha256 is None:
             self.sha256 = uint256_from_str(SHA256.new(SHA256.new(self.serialize()).digest()).digest())
         return self.sha256
-    
+ 
     def is_valid(self):
         self.calc_sha256()
         for tout in self.vout:
@@ -204,7 +182,7 @@ class CTransaction(object):
 
 class CBlock(object):
     def __init__(self):
-        self.nVersion = MY_VERSION
+        self.nVersion = settings.MY_VERSION
         self.hashPrevBlock = 0
         self.hashMerkleRoot = 0
         self.nTime = 0
@@ -214,7 +192,6 @@ class CBlock(object):
         self.sha256 = None
         self.scrypt = None
         self.quark = None
-        else: pass
         if settings.COINDAEMON_Reward == 'POS':
             self.signature = b""
         else: pass
@@ -244,9 +221,9 @@ class CBlock(object):
             r.append(ser_string(self.signature))
         else: pass
         return ''.join(r)
-
-       def calc(self):
-           if self.scrypt is None or self.sha256 is None or self.quark is None:
+ 
+    def calc(self):
+         if self.scrypt is None or self.sha256 is None or self.quark is None:
                r = []
                r.append(struct.pack("<i", self.nVersion))
                r.append(ser_uint256(self.hashPrevBlock))
@@ -255,18 +232,18 @@ class CBlock(object):
                r.append(struct.pack("<I", self.nBits))
                r.append(struct.pack("<I", self.nNonce))
                if settings.COINDAEMON_ALGO == 'scrypt':
-                   self.calculated = uint256_from_str(ltc_scrypt.getPoWHash(''.join(r)))
-               elif settings.COINDAEMON_ALGO == 'scrypt':
-                   self.calculated = uint256_from_str(quark_hash.getPoWHash(''.join(r)))
+                   self.calc = uint256_from_str(ltc_scrypt.getPoWHash(''.join(r)))
+               elif settings.COINDAEMON_ALGO == 'quark':
+                   self.calc = uint256_from_str(quark_hash.getPoWHash(''.join(r)))
                else:
-                   self.calculated = uint256_from_str(SHA256.new(SHA256.new(''.join(r)).digest()).digest())
-           return self.calculated
+                   self.calc = uint256_from_str(SHA256.new(SHA256.new(''.join(r)).digest()).digest())
+         return self.calc
 
     def is_valid(self):
         self.calc()
         target = uint256_from_compact(self.nBits)
 
-        if self.calculated > target:
+        if self.calc > target:
             return False
 
         hashes = []
@@ -293,13 +270,13 @@ class CBlock(object):
 class msg_version(object):
     command = "version"
     def __init__(self):
-        self.nVersion = MY_VERSION
+        self.nVersion = settings.MY_VERSION
         self.nServices = 0
         self.nTime = time.time()
         self.addrTo = CAddress()
         self.addrFrom = CAddress()
         self.nNonce = random.getrandbits(64)
-        self.strSubVer = MY_SUBVERSION
+        self.strSubVer = settings.MY_SUBVERSION
         self.nStartingHeight = 0
         
     def deserialize(self, f):

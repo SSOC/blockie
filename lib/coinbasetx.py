@@ -39,8 +39,8 @@ class CoinbaseTransaction(halfnode.CTransaction):
         tx_out.scriptPubKey = coinbaser.get_script_pubkey()
         if ntime != None:
             self.nTime = ntime
-        if settings.BLOCK_SIGN:
-            self.strTxComment = settings.BLOCK_SIGN
+        #if settings.BLOCK_SIGN != None:
+        #    self.strTxComment = settings.BLOCK_SIGN
         self.vin.append(tx_in)
         self.vout.append(tx_out)
         
