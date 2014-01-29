@@ -36,9 +36,11 @@ Please send all issues/bugs via the github issue tracking system.
 
 #Credits
 * @Slush0 - Original version by Slush0 (original stratum code)
+* @ArtForz
 * @GeneralFault 
 * @WadeeWomersley
 * @Moopless
+* LukeJr
 * @viperaus
 * @TheSeven
 * @Ahmed_Bodi
