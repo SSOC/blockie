@@ -2,6 +2,7 @@
 # Public Domain
 # Original author: ArtForz
 # Twisted integration: slush
+# Blockie rewrite: Stratum Service Opensource Consortium <https://github.com/SSOC/blockie>
 
 import struct
 import socket
